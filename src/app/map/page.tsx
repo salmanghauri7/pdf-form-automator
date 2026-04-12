@@ -275,9 +275,19 @@ export default function MapJsonToPdf() {
       <header className="border-b border-slate-300/80 bg-slate-50/85 px-4 py-3 backdrop-blur sm:px-6">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
           <div>
-            <h1 className="text-lg font-semibold text-slate-900">
-              Mapping Canvas
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-semibold text-slate-900">
+                Mapping Canvas
+              </h1>
+              <button
+                type="button"
+                title="Tip: click a connection line to remove it"
+                aria-label="Tip: click a connection line to remove it"
+                className="flex h-5 w-5 cursor-help items-center justify-center rounded-full border border-slate-300 bg-slate-100 text-[11px] font-semibold text-slate-600 shadow-sm transition hover:bg-slate-200 hover:text-slate-900"
+              >
+                i
+              </button>
+            </div>
             <p className="text-xs text-slate-600">
               Connect JSON leaf paths to PDF form fields.
             </p>
@@ -298,9 +308,6 @@ export default function MapJsonToPdf() {
             </button>
           </div>
         </div>
-        <p className="mt-2 text-xs text-slate-500">
-          Tip: click a connection line to remove it
-        </p>
       </header>
 
       <div className="h-[calc(100vh-65px)] w-full">

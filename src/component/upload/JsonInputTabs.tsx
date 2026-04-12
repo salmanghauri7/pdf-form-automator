@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 type JsonInputTabsProps = {
   onJsonParsed: Dispatch<SetStateAction<unknown>>;
@@ -20,6 +20,9 @@ const JSON_TABS = {
 const JsonInputTabs = ({ onJsonParsed, onError }: JsonInputTabsProps) => {
   const [activeTab, setActiveTab] = useState<string | null>(JSON_TABS.FILE);
   const [rawJson, setRawJson] = useState<string>("");
+  const [jsonFileName, setJsonFileName] = useState<string | null>(null);
+  const [isParsingRaw, setIsParsingRaw] = useState<boolean>(false);
+  const [rawParseSuccess, setRawParseSuccess] = useState<boolean>(false);
 
   const handleJsonFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -51,6 +54,7 @@ const JsonInputTabs = ({ onJsonParsed, onError }: JsonInputTabsProps) => {
       const text = await file.text();
       const parsed = JSON.parse(text);
       onJsonParsed(parsed);
+      setJsonFileName(file.name);
       onError(null);
     } catch (error) {
       const message =
@@ -61,29 +65,54 @@ const JsonInputTabs = ({ onJsonParsed, onError }: JsonInputTabsProps) => {
     }
   };
 
-  const handleRawJsonApply = () => {
-    onError(null);
-
-    const rawBytes = new TextEncoder().encode(rawJson).length;
-    if (rawBytes > MAX_RAW_JSON_BYTES) {
-      onError(
-        `Pasted JSON is too large (${formatBytesToMb(rawBytes)}). Maximum allowed size is ${formatBytesToMb(MAX_RAW_JSON_BYTES)}.`,
-      );
+  useEffect(() => {
+    if (activeTab !== JSON_TABS.RAW) {
+      setIsParsingRaw(false);
+      setRawParseSuccess(false);
       return;
     }
 
-    try {
-      const parsed = JSON.parse(rawJson);
-      onJsonParsed(parsed);
+    const trimmedRawJson = rawJson.trim();
+    if (!trimmedRawJson) {
       onError(null);
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Unknown parsing error occurred.";
-      onError(`JSON is not valid. ${message}`);
+      setIsParsingRaw(false);
+      setRawParseSuccess(false);
+      return;
     }
-  };
+
+    setIsParsingRaw(true);
+    setRawParseSuccess(false);
+
+    const timeoutId = window.setTimeout(() => {
+      const rawBytes = new TextEncoder().encode(rawJson).length;
+      if (rawBytes > MAX_RAW_JSON_BYTES) {
+        onError(
+          `Pasted JSON is too large (${formatBytesToMb(rawBytes)}). Maximum allowed size is ${formatBytesToMb(MAX_RAW_JSON_BYTES)}.`,
+        );
+        setIsParsingRaw(false);
+        return;
+      }
+
+      try {
+        const parsed = JSON.parse(rawJson);
+        onJsonParsed(parsed);
+        onError(null);
+        setRawParseSuccess(true);
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Unknown parsing error occurred.";
+        onError(`JSON is not valid. ${message}`);
+      } finally {
+        setIsParsingRaw(false);
+      }
+    }, 500);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [activeTab, onError, onJsonParsed, rawJson]);
 
   return (
     <div className="rounded-2xl border border-slate-300 bg-slate-100/80 p-5 shadow-sm">
@@ -114,12 +143,22 @@ const JsonInputTabs = ({ onJsonParsed, onError }: JsonInputTabsProps) => {
 
       {activeTab === JSON_TABS.FILE ? (
         <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-400 bg-slate-100 px-4 py-8 text-center">
-          <span className="text-sm font-medium text-slate-700">
-            Upload UTF-8 JSON file
-          </span>
-          <span className="text-xs text-slate-500">
-            Accepts .json files up to 5 MB
-          </span>
+          {jsonFileName ? (
+            <>
+              <span className="text-sm font-medium text-emerald-700">
+                JSON uploaded
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="text-sm font-medium text-slate-700">
+                Upload JSON file
+              </span>
+              <span className="text-xs text-slate-500">
+                Accepts .json files up to 5 MB
+              </span>
+            </>
+          )}
           <input
             type="file"
             accept="application/json,.json"
@@ -139,13 +178,20 @@ const JsonInputTabs = ({ onJsonParsed, onError }: JsonInputTabsProps) => {
 }'
             className="h-44 w-full rounded-xl border border-slate-400 bg-slate-50 px-3 py-2 font-mono text-sm outline-none ring-blue-500 transition focus:ring-2"
           />
-          <button
-            type="button"
-            onClick={handleRawJsonApply}
-            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
-          >
-            Parse JSON
-          </button>
+          {isParsingRaw ? (
+            <div className="inline-flex items-center gap-2 text-xs font-medium text-slate-600">
+              <span className="h-3 w-3 animate-spin rounded-full border-2 border-slate-300 border-t-slate-700" />
+              Checking JSON...
+            </div>
+          ) : rawParseSuccess ? (
+            <p className="text-xs font-medium text-emerald-700">
+              JSON parsed successfully.
+            </p>
+          ) : (
+            <p className="text-xs text-slate-500">
+              JSON is validated automatically after you stop typing.
+            </p>
+          )}
           <p className="text-xs text-slate-500">Raw JSON limit: 2 MB.</p>
         </div>
       )}

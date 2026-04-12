@@ -19,6 +19,7 @@ export default function UploadPage() {
     setMappingObject,
     jsonObject,
     setJsonObject,
+    isHydrated,
   } = useFileContext();
   const [pdfFileName, setPdfFileName] = useState<string | null>(null);
   const [pdfError, setPdfError] = useState<string | null>(null);
@@ -64,8 +65,8 @@ export default function UploadPage() {
   };
 
   const readyToMap = useMemo(
-    () => !!pdfBuffer && jsonObject !== null,
-    [pdfBuffer, jsonObject],
+    () => isHydrated && !!pdfBuffer && jsonObject !== null,
+    [isHydrated, pdfBuffer, jsonObject],
   );
 
   return (
@@ -90,12 +91,23 @@ export default function UploadPage() {
               PDF Upload
             </h2>
             <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-400 bg-slate-100 px-4 py-10 text-center">
-              <span className="text-sm font-medium text-slate-700">
-                Upload .pdf file
-              </span>
-              <span className="text-xs text-slate-500">
-                Only PDF files up to 15 MB are accepted.
-              </span>
+              {pdfFileName ? (
+                <>
+                  <span className="text-sm font-medium text-emerald-700">
+                    PDF uploaded
+                  </span>
+                  <span className="text-xs text-slate-600">{pdfFileName}</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-sm font-medium text-slate-700">
+                    Upload PDF file
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    Only PDF files up to 15 MB are accepted.
+                  </span>
+                </>
+              )}
               <input
                 type="file"
                 accept="application/pdf,.pdf"
@@ -104,11 +116,6 @@ export default function UploadPage() {
               />
             </label>
 
-            {pdfFileName ? (
-              <p className="mt-3 text-xs font-medium text-emerald-700">
-                Loaded: {pdfFileName}
-              </p>
-            ) : null}
             {pdfError ? (
               <p className="mt-3 text-xs font-medium text-red-600">
                 {pdfError}
@@ -124,11 +131,6 @@ export default function UploadPage() {
               onJsonParsed={setJsonObject}
               onError={setJsonError}
             />
-            {jsonObject ? (
-              <p className="mt-3 text-xs font-medium text-emerald-700">
-                JSON parsed and ready.
-              </p>
-            ) : null}
             {jsonError ? (
               <p className="mt-3 text-xs font-medium text-red-600">
                 {jsonError}
