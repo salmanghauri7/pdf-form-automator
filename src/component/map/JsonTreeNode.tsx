@@ -62,8 +62,8 @@ function TreeConnector({
 
   return (
     <>
-      <span className="absolute bottom-0 left-0 top-0 border-l border-slate-300" />
-      <span className="absolute left-0 top-4 w-4 border-t border-slate-300" />
+      <span className="absolute bottom-0 left-0 top-0 border-l border-slate-700" />
+      <span className="absolute left-0 top-4 w-4 border-t border-slate-700" />
       {isLast ? (
         <span className="absolute bottom-0 left-0 top-4 w-px bg-slate-50" />
       ) : null}

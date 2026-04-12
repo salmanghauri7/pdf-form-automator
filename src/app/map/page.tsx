@@ -36,10 +36,14 @@ export default function MapJsonToPdf() {
   const [isGeneratingPreview, setIsGeneratingPreview] =
     useState<boolean>(false);
   const [previewUrl, setPreviewUrl] = useState<string>("");
-  const { pdfBuffer, jsonObject, mappingObject, setMappingObject } =
+  const { pdfBuffer, jsonObject, mappingObject, setMappingObject, isHydrated } =
     useFileContext();
 
   useEffect(() => {
+    if (!isHydrated) {
+      return;
+    }
+
     if (!pdfBuffer || !jsonObject) {
       router.replace("/upload");
       return;
@@ -73,7 +77,7 @@ export default function MapJsonToPdf() {
     };
 
     processData();
-  }, [pdfBuffer, jsonObject, router]);
+  }, [isHydrated, pdfBuffer, jsonObject, router]);
 
   const initialNodes = useMemo(() => {
     const sourceNode = {
