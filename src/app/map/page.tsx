@@ -152,6 +152,10 @@ export default function MapJsonToPdf() {
   }, [initialEdges, setEdges]);
 
   useEffect(() => {
+    if (!isHydrated || loading) {
+      return;
+    }
+
     const derivedMapping = buildMappingFromEdges(edges);
 
     setMappingObject((currentMapping) => {
@@ -161,7 +165,14 @@ export default function MapJsonToPdf() {
 
       return derivedMapping;
     });
-  }, [areMappingsEqual, buildMappingFromEdges, edges, setMappingObject]);
+  }, [
+    areMappingsEqual,
+    buildMappingFromEdges,
+    edges,
+    isHydrated,
+    loading,
+    setMappingObject,
+  ]);
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -173,9 +184,20 @@ export default function MapJsonToPdf() {
       const targetField = params.targetHandle;
 
       setEdges((existing) => {
+        // Keep source fan-out possible: only enforce one edge per target field.
         const withoutTarget = existing.filter(
           (edge) => edge.targetHandle !== targetField,
         );
+
+        const connectionExists = withoutTarget.some(
+          (edge) =>
+            edge.sourceHandle === sourceHandle &&
+            edge.targetHandle === targetField,
+        );
+
+        if (connectionExists) {
+          return withoutTarget;
+        }
 
         return addEdge(
           {
