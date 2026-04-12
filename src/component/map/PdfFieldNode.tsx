@@ -10,7 +10,7 @@ export default function PdfFieldNode({ data }: PdfFieldNodeProps) {
   const fields = data?.fields ?? [];
 
   return (
-    <div className="w-90 rounded-xl border border-slate-200 bg-white p-3 shadow-md">
+    <div className="w-90 rounded-xl border border-slate-300 bg-slate-50 p-3 shadow-md">
       <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
         PDF Fields
       </div>
@@ -18,7 +18,7 @@ export default function PdfFieldNode({ data }: PdfFieldNodeProps) {
         {fields.map((fieldName) => (
           <div
             key={fieldName}
-            className="relative rounded border border-slate-200 bg-slate-50 px-5 py-2"
+            className="relative rounded border border-slate-300 bg-slate-100 px-5 py-2"
           >
             <Handle
               type="target"

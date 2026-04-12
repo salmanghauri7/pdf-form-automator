@@ -36,8 +36,8 @@ export default function PreviewModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 p-4">
-      <div className="relative h-[88vh] w-full max-w-5xl overflow-hidden rounded-2xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
+      <div className="relative h-[88vh] w-full max-w-5xl overflow-hidden rounded-2xl border border-slate-300 bg-slate-50 shadow-2xl">
+        <div className="flex items-center justify-between border-b border-slate-300 px-5 py-3">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-600">
             PDF Preview
           </h2>
@@ -50,7 +50,7 @@ export default function PreviewModal({
           </button>
         </div>
 
-        <div className="h-[calc(88vh-57px)] w-full bg-slate-100">
+        <div className="h-[calc(88vh-57px)] w-full bg-slate-200/70">
           {isGenerating ? (
             <div className="flex h-full items-center justify-center text-sm text-slate-600">
               Generating preview...

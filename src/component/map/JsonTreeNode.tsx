@@ -65,7 +65,7 @@ function TreeConnector({
       <span className="absolute bottom-0 left-0 top-0 border-l border-slate-300" />
       <span className="absolute left-0 top-4 w-4 border-t border-slate-300" />
       {isLast ? (
-        <span className="absolute bottom-0 left-0 top-4 w-px bg-white" />
+        <span className="absolute bottom-0 left-0 top-4 w-px bg-slate-50" />
       ) : null}
     </>
   );
@@ -152,7 +152,7 @@ function JsonTreeNode({ data }: JsonTreeNodeProps) {
   const tree = buildTree(data?.jsonData ?? data?.jsonObject ?? {}, "object");
 
   return (
-    <div className="w-90 rounded-xl border border-slate-200 bg-white p-3 shadow-md">
+    <div className="w-90 rounded-xl border border-slate-300 bg-slate-50 p-3 shadow-md">
       <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
         JSON Source
       </div>

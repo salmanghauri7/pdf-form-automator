@@ -13,7 +13,9 @@ const JsonInputTabs = ({ onJsonParsed, onError }: JsonInputTabsProps) => {
   const [activeTab, setActiveTab] = useState<string | null>(JSON_TABS.FILE);
   const [rawJson, setRawJson] = useState<string>("");
 
-  const handleJsonFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleJsonFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file) {
       onError("file was not uploaded");
@@ -41,13 +43,13 @@ const JsonInputTabs = ({ onJsonParsed, onError }: JsonInputTabsProps) => {
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="mb-4 flex rounded-xl bg-slate-100 p-1">
+    <div className="rounded-2xl border border-slate-300 bg-slate-100/80 p-5 shadow-sm">
+      <div className="mb-4 flex rounded-xl border border-slate-300 bg-slate-200/70 p-1">
         <button
           type="button"
           className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition ${
             activeTab === JSON_TABS.FILE
-              ? "bg-white text-slate-900 shadow-sm"
+              ? "border border-slate-300 bg-slate-50 text-slate-900 shadow-sm"
               : "text-slate-600 hover:text-slate-900"
           }`}
           onClick={() => setActiveTab(JSON_TABS.FILE)}
@@ -58,7 +60,7 @@ const JsonInputTabs = ({ onJsonParsed, onError }: JsonInputTabsProps) => {
           type="button"
           className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition ${
             activeTab === JSON_TABS.RAW
-              ? "bg-white text-slate-900 shadow-sm"
+              ? "border border-slate-300 bg-slate-50 text-slate-900 shadow-sm"
               : "text-slate-600 hover:text-slate-900"
           }`}
           onClick={() => setActiveTab(JSON_TABS.RAW)}
@@ -68,7 +70,7 @@ const JsonInputTabs = ({ onJsonParsed, onError }: JsonInputTabsProps) => {
       </div>
 
       {activeTab === JSON_TABS.FILE ? (
-        <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center">
+        <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-400 bg-slate-100 px-4 py-8 text-center">
           <span className="text-sm font-medium text-slate-700">
             Upload UTF-8 JSON file
           </span>
@@ -90,7 +92,7 @@ const JsonInputTabs = ({ onJsonParsed, onError }: JsonInputTabsProps) => {
     "name": "Jane Doe"
   }
 }'
-            className="h-44 w-full rounded-xl border border-slate-300 px-3 py-2 font-mono text-sm outline-none ring-blue-500 transition focus:ring-2"
+            className="h-44 w-full rounded-xl border border-slate-400 bg-slate-50 px-3 py-2 font-mono text-sm outline-none ring-blue-500 transition focus:ring-2"
           />
           <button
             type="button"

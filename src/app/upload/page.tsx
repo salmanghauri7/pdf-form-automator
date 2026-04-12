@@ -52,8 +52,8 @@ export default function UploadPage() {
   console.log(pdfBuffer, jsonObject);
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_right,#c7d2fe,transparent_35%),radial-gradient(circle_at_bottom_left,#bae6fd,transparent_30%),linear-gradient(#f8fafc,#eef2ff)] px-4 py-10 sm:px-8">
-      <div className="mx-auto max-w-5xl rounded-3xl border border-white/70 bg-white/70 p-6 shadow-xl backdrop-blur sm:p-8">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_right,#bfdbfe,transparent_35%),radial-gradient(circle_at_bottom_left,#bae6fd,transparent_30%),linear-gradient(#f1f5f9,#e5e7eb)] px-4 py-10 sm:px-8">
+      <div className="mx-auto max-w-5xl rounded-3xl border border-slate-300/80 bg-slate-50/85 p-6 shadow-xl backdrop-blur sm:p-8">
         <div className="mb-8">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-blue-700">
             PDF Form Automator & Mapper
@@ -68,11 +68,11 @@ export default function UploadPage() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-slate-300 bg-slate-100/80 p-5 shadow-sm">
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-600">
               PDF Upload
             </h2>
-            <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-10 text-center">
+            <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-slate-400 bg-slate-100 px-4 py-10 text-center">
               <span className="text-sm font-medium text-slate-700">
                 Upload .pdf file
               </span>

@@ -179,8 +179,8 @@ export default function MapJsonToPdf() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <div className="rounded-2xl border border-slate-200 bg-white px-8 py-6 text-center shadow-lg">
+      <div className="flex min-h-screen items-center justify-center bg-slate-100">
+        <div className="rounded-2xl border border-slate-300 bg-slate-50 px-8 py-6 text-center shadow-lg">
           <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
           <p className="text-sm font-medium text-slate-700">
             Preparing mapping canvas...
@@ -192,7 +192,7 @@ export default function MapJsonToPdf() {
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
+      <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
         <div className="max-w-md rounded-xl border border-red-200 bg-red-50 p-5 text-red-700">
           <p className="text-sm font-medium">{error}</p>
           <button
@@ -208,8 +208,8 @@ export default function MapJsonToPdf() {
   }
 
   return (
-    <div className="relative min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#e2e8f0_100%)]">
-      <header className="border-b border-white/80 bg-white/70 px-4 py-3 backdrop-blur sm:px-6">
+    <div className="relative min-h-screen bg-[linear-gradient(180deg,#f1f5f9_0%,#dbe3ee_100%)]">
+      <header className="border-b border-slate-300/80 bg-slate-50/85 px-4 py-3 backdrop-blur sm:px-6">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
           <div>
             <h1 className="text-lg font-semibold text-slate-900">
@@ -220,10 +220,10 @@ export default function MapJsonToPdf() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="rounded-md bg-white px-3 py-1 text-xs font-medium text-slate-700 shadow-sm">
+            <span className="rounded-md border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 shadow-sm">
               Paths: {jsonPaths.length}
             </span>
-            <span className="rounded-md bg-white px-3 py-1 text-xs font-medium text-slate-700 shadow-sm">
+            <span className="rounded-md border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 shadow-sm">
               Fields: {formFields.length}
             </span>
             <button
