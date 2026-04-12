@@ -264,7 +264,7 @@ export default function MapJsonToPdf() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-100">
+      <div className="flex min-h-dvh items-center justify-center bg-slate-100">
         <div className="rounded-2xl border border-slate-300 bg-slate-50 px-8 py-6 text-center shadow-lg">
           <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
           <p className="text-sm font-medium text-slate-700">
@@ -277,7 +277,7 @@ export default function MapJsonToPdf() {
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
+      <div className="flex min-h-dvh items-center justify-center bg-slate-100 px-4">
         <div className="max-w-md rounded-xl border border-red-200 bg-red-50 p-5 text-red-700">
           <p className="text-sm font-medium">{error}</p>
           <button
@@ -293,8 +293,8 @@ export default function MapJsonToPdf() {
   }
 
   return (
-    <div className="relative min-h-screen bg-[linear-gradient(180deg,#f1f5f9_0%,#dbe3ee_100%)]">
-      <header className="border-b border-slate-300/80 bg-slate-50/85 px-4 py-3 backdrop-blur sm:px-6">
+    <div className="relative flex h-dvh flex-col overflow-hidden bg-[linear-gradient(180deg,#f1f5f9_0%,#dbe3ee_100%)]">
+      <header className="shrink-0 border-b border-slate-300/80 bg-slate-50/85 px-4 py-3 backdrop-blur sm:px-6">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
@@ -332,7 +332,7 @@ export default function MapJsonToPdf() {
         </div>
       </header>
 
-      <div className="h-[calc(100vh-65px)] w-full">
+      <div className="min-h-0 w-full flex-1">
         <ReactFlow
           nodes={nodes}
           edges={edges}
