@@ -1,3 +1,4 @@
+'use client'
 import JsonInputTabs from "@/component/upload/JsonInputTabs";
 import useFileContext from "@/context/FileContext";
 import { useRouter } from "next/navigation";

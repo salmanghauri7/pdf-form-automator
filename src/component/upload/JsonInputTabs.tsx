@@ -11,7 +11,7 @@ const JSON_TABS = {
 
 const JsonInputTabs = ({ onJsonParsed, onError }: JsonInputTabsProps) => {
   const [activeTab, setActiveTab] = useState<string | null>(JSON_TABS.FILE);
-  const [rawJson, setRawJson] = useState<string | null>(null);
+  const [rawJson, setRawJson] = useState<string>("");
 
   const handleJsonFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

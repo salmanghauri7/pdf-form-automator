@@ -1,3 +1,4 @@
+'use client';
 import { createContext, Dispatch, ReactNode, SetStateAction, useContext, useMemo, useState } from "react";
 
 type MappingObjectValue = Record<string, string> | null;
