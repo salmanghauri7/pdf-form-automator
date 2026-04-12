@@ -1,50 +1,58 @@
-'use client'
+"use client";
 import JsonInputTabs from "@/component/upload/JsonInputTabs";
 import useFileContext from "@/context/FileContext";
 import { useRouter } from "next/navigation";
 
 import { useMemo, useState } from "react";
 
-export default function UploadPage(){
-    const router = useRouter();
-    const { pdfBuffer, setPdfBuffer, setMappingObject, jsonObject, setJsonObject } = useFileContext();
-    const [pdfFileName, setPdfFileName] = useState<string | null>(null);
-    const [pdfError, setPdfError] = useState<string | null>(null);
-    const [jsonError, setJsonError] = useState<string | null>(null);
+export default function UploadPage() {
+  const router = useRouter();
+  const {
+    pdfBuffer,
+    setPdfBuffer,
+    setMappingObject,
+    jsonObject,
+    setJsonObject,
+  } = useFileContext();
+  const [pdfFileName, setPdfFileName] = useState<string | null>(null);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  const [jsonError, setJsonError] = useState<string | null>(null);
 
-    const handlePdfUpload = async (event: React.ChangeEvent<HTMLInputElement>)=>{
-        const file = event.target.files?.[0];
-        if(!file){
-            setPdfError("Could not find the file");
-            return;
-        }
-        if(file.type !== "application/pdf"){
-            setPdfError("Upload a valid pdf");
-            return;
-        }
-
-        try{
-            const arrayBuffer = await file.arrayBuffer();
-            setPdfBuffer(arrayBuffer);
-            setPdfBuffer(null);
-            setPdfFileName(file.name);
-            setMappingObject({});
-        }catch {
-            setPdfError("Failed to read pdf file. Please try again");
-        }
+  const handlePdfUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      setPdfError("Could not find the file");
+      return;
+    }
+    if (file.type !== "application/pdf") {
+      setPdfError("Upload a valid pdf");
+      return;
     }
 
-    const handleStartMapping = ()=>{
-        router.push("/map");
-    }   
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      setPdfBuffer(arrayBuffer);
+      setPdfFileName(file.name);
+      setMappingObject({});
+    } catch {
+      setPdfError("Failed to read pdf file. Please try again");
+    }
+  };
 
-    const readyToMap = useMemo(
-        () => !!(pdfBuffer) && jsonObject!==null,
-        [pdfBuffer, jsonObject]
-    );
+  const handleStartMapping = () => {
+    router.push("/map");
+  };
 
-    return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_right,_#c7d2fe,_transparent_35%),radial-gradient(circle_at_bottom_left,_#bae6fd,_transparent_30%),linear-gradient(#f8fafc,_#eef2ff)] px-4 py-10 sm:px-8">
+  const readyToMap = useMemo(
+    () => !!pdfBuffer && jsonObject !== null,
+    [pdfBuffer, jsonObject],
+  );
+  console.log(pdfBuffer, jsonObject);
+
+  return (
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_right,#c7d2fe,transparent_35%),radial-gradient(circle_at_bottom_left,#bae6fd,transparent_30%),linear-gradient(#f8fafc,#eef2ff)] px-4 py-10 sm:px-8">
       <div className="mx-auto max-w-5xl rounded-3xl border border-white/70 bg-white/70 p-6 shadow-xl backdrop-blur sm:p-8">
         <div className="mb-8">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-blue-700">
@@ -95,7 +103,10 @@ export default function UploadPage(){
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-600">
               JSON Input
             </h2>
-            <JsonInputTabs onJsonParsed={setJsonObject} onError={setJsonError} />
+            <JsonInputTabs
+              onJsonParsed={setJsonObject}
+              onError={setJsonError}
+            />
             {jsonObject ? (
               <p className="mt-3 text-xs font-medium text-emerald-700">
                 JSON parsed and ready.
@@ -122,6 +133,4 @@ export default function UploadPage(){
       </div>
     </div>
   );
-
-
 }
