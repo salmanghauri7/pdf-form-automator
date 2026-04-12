@@ -3,7 +3,11 @@ import JsonTreeNode from "@/component/map/JsonTreeNode";
 import PdfFieldNode from "@/component/map/PdfFieldNode";
 import useFileContext from "@/context/FileContext";
 import { FlattenedEntry, flattenJsonObject } from "@/utils/jsonUtils";
-import { extractPdfFormFields, fillPdfWithMapping } from "@/utils/pdfUtils";
+import {
+  extractPdfFormFields,
+  fillPdfWithMapping,
+  validatePdfMapping,
+} from "@/utils/pdfUtils";
 import "@xyflow/react/dist/style.css";
 import {
   addEdge,
@@ -20,6 +24,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import PreviewModal from "@/component/map/PreviewModal";
+import { Toaster, toast } from "sonner";
 
 const nodeTypes = {
   jsonTree: JsonTreeNode,
@@ -234,14 +239,54 @@ export default function MapJsonToPdf() {
 
   const openPreview = async () => {
     if (!pdfBuffer || !jsonObject) {
+      toast.error("Upload both PDF and JSON before preview.");
       return;
     }
+
+    if (!mappingObject || Object.keys(mappingObject).length === 0) {
+      toast.error("Create at least one mapping before preview.");
+      return;
+    }
+
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
     }
+
     try {
       setIsPreviewOpen(true);
       setIsGeneratingPreview(true);
+
+      const validation = await validatePdfMapping(
+        pdfBuffer,
+        jsonObject,
+        mappingObject,
+      );
+
+      if (validation.warningCount > 0) {
+        toast.warning(
+          `Mapping check found ${validation.warningCount} warning${validation.warningCount > 1 ? "s" : ""}.`,
+        );
+      }
+
+      if (validation.errorCount > 0) {
+        const previewIssues = validation.issues
+          .filter((issue) => issue.level === "error")
+          .slice(0, 3);
+
+        previewIssues.forEach((issue) => {
+          toast.error(`${issue.fieldName}: ${issue.message}`);
+        });
+
+        if (validation.errorCount > previewIssues.length) {
+          toast.error(
+            `+${validation.errorCount - previewIssues.length} more mapping error${validation.errorCount - previewIssues.length > 1 ? "s" : ""}.`,
+          );
+        }
+
+        setIsPreviewOpen(false);
+        return;
+      }
+
       const blob = await fillPdfWithMapping(
         pdfBuffer,
         jsonObject,
@@ -249,6 +294,8 @@ export default function MapJsonToPdf() {
       );
       const url = URL.createObjectURL(blob);
       setPreviewUrl(url);
+    } catch (error) {
+      toast.error(`Failed to generate preview: ${String(error)}`);
     } finally {
       setIsGeneratingPreview(false);
     }
@@ -294,6 +341,7 @@ export default function MapJsonToPdf() {
 
   return (
     <div className="relative flex h-dvh flex-col overflow-hidden bg-[linear-gradient(180deg,#f1f5f9_0%,#dbe3ee_100%)]">
+      <Toaster position="top-right" richColors closeButton />
       <header className="shrink-0 border-b border-slate-300/80 bg-slate-50/85 px-4 py-3 backdrop-blur sm:px-6">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
           <div>
