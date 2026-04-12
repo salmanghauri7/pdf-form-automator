@@ -5,6 +5,12 @@ import { useRouter } from "next/navigation";
 
 import { useMemo, useState } from "react";
 
+const MAX_PDF_SIZE_BYTES = 15 * 1024 * 1024;
+
+function formatBytesToMb(sizeInBytes: number): string {
+  return `${(sizeInBytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
 export default function UploadPage() {
   const router = useRouter();
   const {
@@ -21,13 +27,25 @@ export default function UploadPage() {
   const handlePdfUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
+    setPdfError(null);
+
     const file = event.target.files?.[0];
     if (!file) {
-      setPdfError("Could not find the file");
+      setPdfError("No file selected. Please choose a PDF file.");
       return;
     }
-    if (file.type !== "application/pdf") {
-      setPdfError("Upload a valid pdf");
+
+    const isPdfMime = file.type === "application/pdf";
+    const isPdfExtension = file.name.toLowerCase().endsWith(".pdf");
+    if (!isPdfMime && !isPdfExtension) {
+      setPdfError("Invalid file type. Only .pdf files are allowed.");
+      return;
+    }
+
+    if (file.size > MAX_PDF_SIZE_BYTES) {
+      setPdfError(
+        `PDF is too large (${formatBytesToMb(file.size)}). Maximum allowed size is ${formatBytesToMb(MAX_PDF_SIZE_BYTES)}.`,
+      );
       return;
     }
 
@@ -37,7 +55,7 @@ export default function UploadPage() {
       setPdfFileName(file.name);
       setMappingObject({});
     } catch {
-      setPdfError("Failed to read pdf file. Please try again");
+      setPdfError("Failed to read the PDF file. Please try again.");
     }
   };
 
@@ -49,7 +67,6 @@ export default function UploadPage() {
     () => !!pdfBuffer && jsonObject !== null,
     [pdfBuffer, jsonObject],
   );
-  console.log(pdfBuffer, jsonObject);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_right,#bfdbfe,transparent_35%),radial-gradient(circle_at_bottom_left,#bae6fd,transparent_30%),linear-gradient(#f1f5f9,#e5e7eb)] px-4 py-10 sm:px-8">
@@ -77,7 +94,7 @@ export default function UploadPage() {
                 Upload .pdf file
               </span>
               <span className="text-xs text-slate-500">
-                Stored as ArrayBuffer in context
+                Only PDF files up to 15 MB are accepted.
               </span>
               <input
                 type="file"

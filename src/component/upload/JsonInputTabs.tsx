@@ -1,8 +1,16 @@
 import { Dispatch, SetStateAction, useState } from "react";
+
 type JsonInputTabsProps = {
   onJsonParsed: Dispatch<SetStateAction<unknown>>;
   onError: Dispatch<SetStateAction<string | null>>;
 };
+
+const MAX_JSON_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+const MAX_RAW_JSON_BYTES = 2 * 1024 * 1024;
+
+function formatBytesToMb(sizeInBytes: number): string {
+  return `${(sizeInBytes / (1024 * 1024)).toFixed(2)} MB`;
+}
 
 const JSON_TABS = {
   FILE: "file",
@@ -16,9 +24,26 @@ const JsonInputTabs = ({ onJsonParsed, onError }: JsonInputTabsProps) => {
   const handleJsonFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
+    onError(null);
+
     const file = event.target.files?.[0];
     if (!file) {
-      onError("file was not uploaded");
+      onError("No file selected. Please choose a JSON file.");
+      return;
+    }
+
+    const isJsonMime =
+      file.type === "application/json" || file.type === "text/json";
+    const isJsonExtension = file.name.toLowerCase().endsWith(".json");
+    if (!isJsonMime && !isJsonExtension) {
+      onError("Invalid file type. Only .json files are allowed.");
+      return;
+    }
+
+    if (file.size > MAX_JSON_FILE_SIZE_BYTES) {
+      onError(
+        `JSON file is too large (${formatBytesToMb(file.size)}). Maximum allowed size is ${formatBytesToMb(MAX_JSON_FILE_SIZE_BYTES)}.`,
+      );
       return;
     }
 
@@ -27,18 +52,36 @@ const JsonInputTabs = ({ onJsonParsed, onError }: JsonInputTabsProps) => {
       const parsed = JSON.parse(text);
       onJsonParsed(parsed);
       onError(null);
-    } catch {
-      onError("Invalid JSON file. Choose a valid JSON file");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unknown parsing error occurred.";
+      onError(`Invalid JSON file. ${message}`);
     }
   };
 
   const handleRawJsonApply = () => {
+    onError(null);
+
+    const rawBytes = new TextEncoder().encode(rawJson).length;
+    if (rawBytes > MAX_RAW_JSON_BYTES) {
+      onError(
+        `Pasted JSON is too large (${formatBytesToMb(rawBytes)}). Maximum allowed size is ${formatBytesToMb(MAX_RAW_JSON_BYTES)}.`,
+      );
+      return;
+    }
+
     try {
       const parsed = JSON.parse(rawJson);
       onJsonParsed(parsed);
       onError(null);
-    } catch {
-      onError("JSON is not valid");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unknown parsing error occurred.";
+      onError(`JSON is not valid. ${message}`);
     }
   };
 
@@ -74,7 +117,9 @@ const JsonInputTabs = ({ onJsonParsed, onError }: JsonInputTabsProps) => {
           <span className="text-sm font-medium text-slate-700">
             Upload UTF-8 JSON file
           </span>
-          <span className="text-xs text-slate-500">Accepts .json files</span>
+          <span className="text-xs text-slate-500">
+            Accepts .json files up to 5 MB
+          </span>
           <input
             type="file"
             accept="application/json,.json"
@@ -101,6 +146,7 @@ const JsonInputTabs = ({ onJsonParsed, onError }: JsonInputTabsProps) => {
           >
             Parse JSON
           </button>
+          <p className="text-xs text-slate-500">Raw JSON limit: 2 MB.</p>
         </div>
       )}
     </div>

@@ -7,9 +7,12 @@ import { extractPdfFormFields, fillPdfWithMapping } from "@/utils/pdfUtils";
 import "@xyflow/react/dist/style.css";
 import {
   addEdge,
+  applyEdgeChanges,
   Background,
   Connection,
   Controls,
+  Edge,
+  EdgeChange,
   ReactFlow,
   useEdgesState,
   useNodesState,
@@ -90,7 +93,7 @@ export default function MapJsonToPdf() {
     return [sourceNode, targetNode];
   }, [jsonObject, formFields]);
 
-  const initialEdges = useMemo(() => {
+  const initialEdges = useMemo<Edge[]>(() => {
     if (typeof mappingObject === "object" && mappingObject != null) {
       return Object.entries(mappingObject).map(([pdfFieldName, path]) => ({
         id: `${pdfFieldName}-${path}`,
@@ -104,8 +107,37 @@ export default function MapJsonToPdf() {
     return [];
   }, [mappingObject]);
 
+  const buildMappingFromEdges = useCallback(
+    (edgesList: Edge[]): Record<string, string> => {
+      return edgesList.reduce<Record<string, string>>((accumulator, edge) => {
+        if (edge.targetHandle == null || edge.sourceHandle == null) {
+          return accumulator;
+        }
+
+        accumulator[String(edge.targetHandle)] = String(edge.sourceHandle);
+        return accumulator;
+      }, {});
+    },
+    [],
+  );
+
+  const areMappingsEqual = useCallback(
+    (current: Record<string, string> | null, next: Record<string, string>) => {
+      const safeCurrent = current ?? {};
+      const currentKeys = Object.keys(safeCurrent);
+      const nextKeys = Object.keys(next);
+
+      if (currentKeys.length !== nextKeys.length) {
+        return false;
+      }
+
+      return currentKeys.every((key) => safeCurrent[key] === next[key]);
+    },
+    [],
+  );
+
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [edges, setEdges] = useEdgesState(initialEdges);
 
   useEffect(() => {
     setNodes(initialNodes);
@@ -114,6 +146,18 @@ export default function MapJsonToPdf() {
   useEffect(() => {
     setEdges(initialEdges);
   }, [initialEdges, setEdges]);
+
+  useEffect(() => {
+    const derivedMapping = buildMappingFromEdges(edges);
+
+    setMappingObject((currentMapping) => {
+      if (areMappingsEqual(currentMapping, derivedMapping)) {
+        return currentMapping;
+      }
+
+      return derivedMapping;
+    });
+  }, [areMappingsEqual, buildMappingFromEdges, edges, setMappingObject]);
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -138,13 +182,28 @@ export default function MapJsonToPdf() {
           withoutTarget,
         );
       });
-
-      setMappingObject((previous) => ({
-        ...previous,
-        [targetField]: sourceHandle,
-      }));
     },
-    [setEdges, setMappingObject],
+    [setEdges],
+  );
+
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange[]) => {
+      setEdges((currentEdges) => {
+        return applyEdgeChanges(changes, currentEdges);
+      });
+    },
+    [setEdges],
+  );
+
+  const onEdgeClick = useCallback(
+    (event: React.MouseEvent, edge: Edge) => {
+      event.preventDefault();
+
+      setEdges((currentEdges) => {
+        return currentEdges.filter((currentEdge) => currentEdge.id !== edge.id);
+      });
+    },
+    [setEdges],
   );
 
   const openPreview = async () => {
@@ -235,6 +294,9 @@ export default function MapJsonToPdf() {
             </button>
           </div>
         </div>
+        <p className="mt-2 text-xs text-slate-500">
+          Tip: click a connection line to remove it
+        </p>
       </header>
 
       <div className="h-[calc(100vh-65px)] w-full">
@@ -243,6 +305,7 @@ export default function MapJsonToPdf() {
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
+          onEdgeClick={onEdgeClick}
           onConnect={onConnect}
           nodeTypes={nodeTypes}
           fitView
