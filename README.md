@@ -20,7 +20,7 @@ The app supports common PDF field types (text, checkbox, radio, dropdown, and op
 1. Clone the repository:
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/salmanghauri7/pdf-form-automator.git
 cd pdf-form
 ```
 
