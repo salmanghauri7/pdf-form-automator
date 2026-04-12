@@ -80,14 +80,14 @@ export default function MapJsonToPdf() {
       position: { x: 40, y: 80 },
       draggable: false,
     };
-    const targetNodes = formFields.map((field, index) => ({
-      id: field,
+    const targetNode = {
+      id: "pdf-fields-node",
       type: "pdfField",
-      data: { fieldName: field },
-      position: { x: 760, y: 60 + index * 80 },
+      data: { fields: formFields },
+      position: { x: 760, y: 80 },
       draggable: false,
-    }));
-    return [sourceNode, ...targetNodes];
+    };
+    return [sourceNode, targetNode];
   }, [jsonObject, formFields]);
 
   const initialEdges = useMemo(() => {
@@ -96,7 +96,7 @@ export default function MapJsonToPdf() {
         id: `${pdfFieldName}-${path}`,
         source: "json-source-node",
         sourceHandle: String(path),
-        target: pdfFieldName,
+        target: "pdf-fields-node",
         targetHandle: pdfFieldName,
         animated: true,
       }));
@@ -117,20 +117,22 @@ export default function MapJsonToPdf() {
 
   const onConnect = useCallback(
     (params: Connection) => {
-      if (params.sourceHandle == null || params.target == null) {
+      if (params.sourceHandle == null || params.targetHandle == null) {
         return;
       }
 
       const sourceHandle = params.sourceHandle;
-      const target = params.target;
+      const targetField = params.targetHandle;
 
       setEdges((existing) => {
-        const withoutTarget = existing.filter((edge) => edge.target !== target);
+        const withoutTarget = existing.filter(
+          (edge) => edge.targetHandle !== targetField,
+        );
 
         return addEdge(
           {
             ...params,
-            id: `${target}-${sourceHandle}`,
+            id: `${targetField}-${sourceHandle}`,
             animated: true,
           },
           withoutTarget,
@@ -139,7 +141,7 @@ export default function MapJsonToPdf() {
 
       setMappingObject((previous) => ({
         ...previous,
-        [target]: sourceHandle,
+        [targetField]: sourceHandle,
       }));
     },
     [setEdges, setMappingObject],

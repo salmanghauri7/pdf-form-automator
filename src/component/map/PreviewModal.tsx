@@ -22,7 +22,7 @@ export default function PreviewModal({
 
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        onClose();
+        onClose(false);
       }
     };
 
@@ -44,7 +44,7 @@ export default function PreviewModal({
           <button
             type="button"
             className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
-            onClick={onClose}
+            onClick={() => onClose(false)}
           >
             Close
           </button>
