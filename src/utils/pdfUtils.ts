@@ -1,5 +1,22 @@
 import { PDFDocument } from "pdf-lib";
 import { get as lodashGet } from "lodash";
+import fontkit from "@pdf-lib/fontkit";
+
+const DEFAULT_UNICODE_FONT_PATH = "/fonts/NotoSans-Regular.ttf";
+
+async function loadCustomFontBytes(
+  fontPath: string = DEFAULT_UNICODE_FONT_PATH,
+): Promise<ArrayBuffer> {
+  const response = await fetch(fontPath);
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to load custom font at ${fontPath}. Add a TTF file under public/fonts.`,
+    );
+  }
+
+  return response.arrayBuffer();
+}
 
 export async function extractPdfFormFields(
   pdfBuffer: ArrayBuffer | null,
@@ -17,10 +34,16 @@ export async function extractPdfFormFields(
 export async function fillPdfWithMapping(
   pdfBuffer: ArrayBuffer,
   jsonData: unknown,
-  mappingObject: Record<string, string> ,
+  mappingObject: Record<string, string>,
 ): Promise<Blob> {
   const pdfDoc = await PDFDocument.load(pdfBuffer);
+  pdfDoc.registerFontkit(fontkit);
+
+  const customFontBytes = await loadCustomFontBytes();
+  const customFont = await pdfDoc.embedFont(customFontBytes);
+
   const form = pdfDoc.getForm();
+  form.updateFieldAppearances(customFont);
 
   for (const [pdfFieldName, jsonPath] of Object.entries(mappingObject)) {
     const rawValue = lodashGet(jsonData, jsonPath);
@@ -34,9 +57,10 @@ export async function fillPdfWithMapping(
     try {
       const field = form.getTextField(pdfFieldName);
       field.setText(textValue);
+      field.updateAppearances(customFont);
       continue;
-    } catch {
-      // Fall through for non-text fields.
+    } catch (error) {
+      console.error(`Failed to set PDF field \"${pdfFieldName}\".`, error);
     }
   }
 
