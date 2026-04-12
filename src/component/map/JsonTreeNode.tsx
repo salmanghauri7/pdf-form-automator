@@ -12,10 +12,10 @@ type JsonTree = {
 };
 
 type JsonTreeNodeProps = {
-  data?: {
-    jsonData?: unknown;
+  data:{
     jsonObject?: unknown;
-  };
+  }
+  
 };
 
 type JsonBranchProps = {
@@ -150,7 +150,7 @@ function JsonBranch({
 }
 
 function JsonTreeNode({ data }: JsonTreeNodeProps) {
-  const tree = buildTree(data?.jsonData ?? data?.jsonObject ?? {}, "object");
+  const tree = buildTree(data?.jsonObject ?? {}, "object");
 
   return (
     <div className="w-90 rounded-xl border border-slate-300 bg-slate-50 p-3 shadow-md">

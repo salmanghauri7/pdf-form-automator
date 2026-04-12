@@ -2,7 +2,6 @@
 import JsonTreeNode from "@/component/map/JsonTreeNode";
 import PdfFieldNode from "@/component/map/PdfFieldNode";
 import useFileContext from "@/context/FileContext";
-import { FlattenedEntry, flattenJsonObject } from "@/utils/jsonUtils";
 import {
   extractPdfFormFields,
   fillPdfWithMapping,
@@ -36,7 +35,6 @@ export default function MapJsonToPdf() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>();
   const [formFields, setFormFields] = useState<string[]>([]);
-  const [jsonPaths, setJsonPaths] = useState<FlattenedEntry[]>([]);
   const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
   const [isGeneratingPreview, setIsGeneratingPreview] =
     useState<boolean>(false);
@@ -62,18 +60,6 @@ export default function MapJsonToPdf() {
         const formFields = await extractPdfFormFields(pdfBuffer);
         setFormFields(formFields);
 
-        if (
-          jsonObject &&
-          typeof jsonObject === "object" &&
-          !Array.isArray(jsonObject)
-        ) {
-          const flatData = flattenJsonObject({
-            jsonData: jsonObject as Record<string, unknown>,
-          });
-          setJsonPaths(flatData);
-        } else {
-          setError("No valid JSON object found to flatten.");
-        }
       } catch (error) {
         setError("Got this error" + error);
       } finally {
@@ -88,7 +74,7 @@ export default function MapJsonToPdf() {
     const sourceNode = {
       id: "json-source-node",
       type: "jsonTree",
-      data: { jsonData: jsonObject },
+      data: { jsonObject },
       position: { x: 40, y: 80 },
       draggable: false,
     };
@@ -363,12 +349,7 @@ export default function MapJsonToPdf() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="rounded-md border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 shadow-sm">
-              Paths: {jsonPaths.length}
-            </span>
-            <span className="rounded-md border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 shadow-sm">
-              Fields: {formFields.length}
-            </span>
+            
             <button
               type="button"
               onClick={openPreview}
