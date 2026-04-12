@@ -7,7 +7,6 @@ type PdfFieldNodeProps = {
 };
 
 export default function PdfFieldNode({ data }: PdfFieldNodeProps) {
-  debugger;
   const fieldName = data?.fieldName ?? "";
 
   return (

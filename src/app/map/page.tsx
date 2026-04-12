@@ -3,7 +3,7 @@ import JsonTreeNode from "@/component/map/JsonTreeNode";
 import PdfFieldNode from "@/component/map/PdfFieldNode";
 import useFileContext from "@/context/FileContext";
 import { FlattenedEntry, flattenJsonObject } from "@/utils/jsonUtils";
-import { extractPdfFormFields } from "@/utils/pdfUtils";
+import { extractPdfFormFields, fillPdfWithMapping } from "@/utils/pdfUtils";
 import "@xyflow/react/dist/style.css";
 import {
   addEdge,
@@ -16,6 +16,7 @@ import {
 } from "@xyflow/react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import PreviewModal from "@/component/map/PreviewModal";
 
 const nodeTypes = {
   jsonTree: JsonTreeNode,
@@ -28,6 +29,10 @@ export default function MapJsonToPdf() {
   const [error, setError] = useState<string>();
   const [formFields, setFormFields] = useState<string[]>([]);
   const [jsonPaths, setJsonPaths] = useState<FlattenedEntry[]>([]);
+  const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
+  const [isGeneratingPreview, setIsGeneratingPreview] =
+    useState<boolean>(false);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
   const { pdfBuffer, jsonObject, mappingObject, setMappingObject } =
     useFileContext();
 
@@ -140,6 +145,36 @@ export default function MapJsonToPdf() {
     [setEdges, setMappingObject],
   );
 
+  const openPreview = async () => {
+    if (!pdfBuffer || !jsonObject) {
+      return;
+    }
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    try {
+      setIsPreviewOpen(true);
+      setIsGeneratingPreview(true);
+      const blob = await fillPdfWithMapping(
+        pdfBuffer,
+        jsonObject,
+        mappingObject ?? {},
+      );
+      const url = URL.createObjectURL(blob);
+      setPreviewUrl(url);
+    } finally {
+      setIsGeneratingPreview(false);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
@@ -189,13 +224,13 @@ export default function MapJsonToPdf() {
             <span className="rounded-md bg-white px-3 py-1 text-xs font-medium text-slate-700 shadow-sm">
               Fields: {formFields.length}
             </span>
-            {/* <button
+            <button
               type="button"
               onClick={openPreview}
               className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500"
             >
               Preview
-            </button> */}
+            </button>
           </div>
         </div>
       </header>
@@ -216,12 +251,12 @@ export default function MapJsonToPdf() {
         </ReactFlow>
       </div>
 
-      {/* <PreviewModal
+      <PreviewModal
         isOpen={isPreviewOpen}
         onClose={() => setIsPreviewOpen(false)}
         previewUrl={previewUrl}
         isGenerating={isGeneratingPreview}
-      /> */}
+      />
     </div>
   );
 }
