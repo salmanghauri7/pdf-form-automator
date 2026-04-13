@@ -391,6 +391,12 @@ export default function MapJsonToPdf() {
           onEdgeClick={onEdgeClick}
           onConnect={onConnect}
           nodeTypes={nodeTypes}
+          connectionLineStyle={{
+            stroke: "#2563ea",
+            strokeWidth: 1.5,
+            strokeDasharray: "6 4",
+            opacity: 0.95,
+          }}
           fitView
           fitViewOptions={{ padding: 0.2 }}
         >

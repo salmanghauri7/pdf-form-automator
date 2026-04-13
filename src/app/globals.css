@@ -14,3 +14,10 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), sans-serif;
 }
+
+/* .react-flow__connection path {
+  stroke: #2563eb;
+  stroke-width: 2.5;
+  stroke-dasharray: 6 4;
+  opacity: 0.95;
+} */
