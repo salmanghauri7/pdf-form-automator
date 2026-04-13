@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { Handle, Position } from "@xyflow/react";
 import { FaCaretDown, FaCaretRight } from "react-icons/fa";
 
@@ -12,10 +12,10 @@ type JsonTree = {
 };
 
 type JsonTreeNodeProps = {
-  data:{
+  data: {
     jsonObject?: unknown;
-  }
-  
+    onVisibleHandlesChange?: (handles: string[]) => void;
+  };
 };
 
 type JsonBranchProps = {
@@ -23,7 +23,11 @@ type JsonBranchProps = {
   parentPath?: string;
   isLast?: boolean;
   isRoot?: boolean;
+  openBranches: Record<string, boolean>;
+  onBranchToggle: (branchKey: string, isOpen: boolean) => void;
 };
+
+const ROOT_BRANCH_KEY = "__root__";
 
 function buildTree(value: unknown, key = "object"): JsonTree {
   if (value === null || value === undefined || typeof value !== "object") {
@@ -62,13 +66,45 @@ function TreeConnector({
 
   return (
     <>
-      <span className="absolute bottom-0 left-2.25 top-0 border-l border-slate-700" />
+      <span className="absolute left-2.25 top-0 h-4 border-l border-slate-700" />
       <span className="absolute left-2.25 top-4 w-3 border-t border-slate-700" />
-      {isLast ? (
-        <span className="absolute bottom-0 left-2.25 top-4 w-px bg-slate-50" />
-      ) : null}
+      {isLast ? null : (
+        <span className="absolute bottom-0 left-2.25 top-4 border-l border-slate-700" />
+      )}
     </>
   );
+}
+
+function buildChildPath(parentPath: string, pathPart: string) {
+  return pathPart.startsWith("[")
+    ? `${parentPath}${pathPart}`
+    : parentPath
+      ? `${parentPath}.${pathPart}`
+      : pathPart;
+}
+
+function collectVisibleLeafPaths(
+  node: JsonTree,
+  parentPath: string,
+  openBranches: Record<string, boolean>,
+  isRoot = false,
+): string[] {
+  if (node.isLeaf) {
+    return parentPath ? [parentPath] : [];
+  }
+
+  const branchKey = isRoot ? ROOT_BRANCH_KEY : parentPath;
+  const isOpen = openBranches[branchKey] ?? true;
+
+  if (!isOpen) {
+    return [];
+  }
+
+  return (node.children ?? []).flatMap((child) => {
+    const childPath = buildChildPath(parentPath, child.label);
+
+    return collectVisibleLeafPaths(child, childPath, openBranches, false);
+  });
 }
 
 function JsonBranch({
@@ -76,8 +112,11 @@ function JsonBranch({
   parentPath = "",
   isLast = false,
   isRoot = false,
+  openBranches,
+  onBranchToggle,
 }: JsonBranchProps) {
-  const [isOpen, setIsOpen] = useState(true);
+  const branchKey = isRoot ? ROOT_BRANCH_KEY : parentPath;
+  const isOpen = openBranches[branchKey] ?? true;
 
   if (node.isLeaf) {
     const fullPath = parentPath;
@@ -107,7 +146,7 @@ function JsonBranch({
         className="ml-0"
         open={isOpen}
         onToggle={(event) => {
-          setIsOpen(event.currentTarget.open);
+          onBranchToggle(branchKey, event.currentTarget.open);
         }}
       >
         <summary className="flex cursor-pointer list-none items-center gap-2 rounded px-1 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600 hover:bg-slate-100">
@@ -126,12 +165,7 @@ function JsonBranch({
         </summary>
         <div className="space-y-1 py-1">
           {(node.children || []).map((child, index, arr) => {
-            const pathPart = child.label;
-            const childPath = pathPart.startsWith("[")
-              ? `${parentPath}${pathPart}`
-              : parentPath
-                ? `${parentPath}.${pathPart}`
-                : pathPart;
+            const childPath = buildChildPath(parentPath, child.label);
 
             return (
               <JsonBranch
@@ -140,6 +174,8 @@ function JsonBranch({
                 parentPath={childPath}
                 isLast={index === arr.length - 1}
                 isRoot={false}
+                openBranches={openBranches}
+                onBranchToggle={onBranchToggle}
               />
             );
           })}
@@ -150,7 +186,35 @@ function JsonBranch({
 }
 
 function JsonTreeNode({ data }: JsonTreeNodeProps) {
-  const tree = buildTree(data?.jsonObject ?? {}, "object");
+  const [openBranches, setOpenBranches] = useState<Record<string, boolean>>({});
+
+  const tree = useMemo(
+    () => buildTree(data?.jsonObject ?? {}, "object"),
+    [data?.jsonObject],
+  );
+
+  useEffect(() => {
+    const visibleHandles = collectVisibleLeafPaths(
+      tree,
+      "",
+      openBranches,
+      true,
+    );
+    data?.onVisibleHandlesChange?.(visibleHandles);
+  }, [data, openBranches, tree]);
+
+  const onBranchToggle = (branchKey: string, isOpen: boolean) => {
+    setOpenBranches((current) => {
+      if ((current[branchKey] ?? true) === isOpen) {
+        return current;
+      }
+
+      return {
+        ...current,
+        [branchKey]: isOpen,
+      };
+    });
+  };
 
   return (
     <div className="w-90 rounded-xl border border-slate-300 bg-slate-50 p-3 shadow-md">
@@ -158,7 +222,12 @@ function JsonTreeNode({ data }: JsonTreeNodeProps) {
         JSON Source
       </div>
       <div className="max-h-[66vh]  pr-2">
-        <JsonBranch node={tree} isRoot />
+        <JsonBranch
+          node={tree}
+          isRoot
+          openBranches={openBranches}
+          onBranchToggle={onBranchToggle}
+        />
       </div>
     </div>
   );

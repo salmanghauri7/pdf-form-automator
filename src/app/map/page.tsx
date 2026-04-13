@@ -39,6 +39,8 @@ export default function MapJsonToPdf() {
   const [isGeneratingPreview, setIsGeneratingPreview] =
     useState<boolean>(false);
   const [previewUrl, setPreviewUrl] = useState<string>("");
+  const [visibleSourceHandles, setVisibleSourceHandles] =
+    useState<Set<string> | null>(null);
   const { pdfBuffer, jsonObject, mappingObject, setMappingObject, isHydrated } =
     useFileContext();
 
@@ -59,7 +61,6 @@ export default function MapJsonToPdf() {
 
         const formFields = await extractPdfFormFields(pdfBuffer);
         setFormFields(formFields);
-
       } catch (error) {
         setError("Got this error" + error);
       } finally {
@@ -70,11 +71,18 @@ export default function MapJsonToPdf() {
     processData();
   }, [isHydrated, pdfBuffer, jsonObject, router]);
 
+  const onVisibleSourceHandlesChange = useCallback((handles: string[]) => {
+    setVisibleSourceHandles(new Set(handles));
+  }, []);
+
   const initialNodes = useMemo(() => {
     const sourceNode = {
       id: "json-source-node",
       type: "jsonTree",
-      data: { jsonObject },
+      data: {
+        jsonObject,
+        onVisibleHandlesChange: onVisibleSourceHandlesChange,
+      },
       position: { x: 40, y: 80 },
       draggable: false,
     };
@@ -86,7 +94,7 @@ export default function MapJsonToPdf() {
       draggable: false,
     };
     return [sourceNode, targetNode];
-  }, [jsonObject, formFields]);
+  }, [formFields, jsonObject, onVisibleSourceHandlesChange]);
 
   const initialEdges = useMemo<Edge[]>(() => {
     if (typeof mappingObject === "object" && mappingObject != null) {
@@ -133,6 +141,20 @@ export default function MapJsonToPdf() {
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges] = useEdgesState(initialEdges);
+
+  const renderedEdges = useMemo(() => {
+    if (visibleSourceHandles == null) {
+      return edges;
+    }
+
+    return edges.filter((edge) => {
+      if (edge.sourceHandle == null) {
+        return true;
+      }
+
+      return visibleSourceHandles.has(String(edge.sourceHandle));
+    });
+  }, [edges, visibleSourceHandles]);
 
   useEffect(() => {
     setNodes(initialNodes);
@@ -349,7 +371,6 @@ export default function MapJsonToPdf() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            
             <button
               type="button"
               onClick={openPreview}
@@ -364,7 +385,7 @@ export default function MapJsonToPdf() {
       <div className="min-h-0 w-full flex-1">
         <ReactFlow
           nodes={nodes}
-          edges={edges}
+          edges={renderedEdges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onEdgeClick={onEdgeClick}
