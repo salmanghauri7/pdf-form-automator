@@ -36,7 +36,6 @@ const FileContext = createContext<FileContextValue | null>(null);
 
 const SESSION_STORAGE_KEY = "pdf-form-session-v1";
 const MAX_SESSION_STORAGE_BYTES = 4 * 1024 * 1024;
-const MIN_PERSISTABLE_PDF_BYTES = 2 * 1024 * 1024;
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
   let binary = "";
@@ -140,7 +139,7 @@ export function FileProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (pdfBuffer.byteLength > MIN_PERSISTABLE_PDF_BYTES) {
+    if (pdfBuffer.byteLength > MAX_SESSION_STORAGE_BYTES) {
       clearSessionStorage();
       return;
     }

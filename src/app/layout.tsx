@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "PDF Form Automator & Mapper",
   description:
     "Upload PDF and JSON, map fields visually, and preview filled forms.",

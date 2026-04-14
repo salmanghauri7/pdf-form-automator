@@ -65,8 +65,13 @@ export default function UploadPage() {
   };
 
   const readyToMap = useMemo(
-    () => isHydrated && !!pdfBuffer && jsonObject !== null,
-    [isHydrated, pdfBuffer, jsonObject],
+    () =>
+      isHydrated &&
+      !!pdfBuffer &&
+      jsonObject !== null &&
+      !pdfError &&
+      !jsonError,
+    [isHydrated, jsonError, jsonObject, pdfBuffer, pdfError],
   );
 
   return (

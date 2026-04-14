@@ -31,6 +31,7 @@ const JsonInputTabs = ({ onJsonParsed, onError }: JsonInputTabsProps) => {
 
     const file = event.target.files?.[0];
     if (!file) {
+      onJsonParsed(null);
       onError("No file selected. Please choose a JSON file.");
       return;
     }
@@ -39,11 +40,13 @@ const JsonInputTabs = ({ onJsonParsed, onError }: JsonInputTabsProps) => {
       file.type === "application/json" || file.type === "text/json";
     const isJsonExtension = file.name.toLowerCase().endsWith(".json");
     if (!isJsonMime && !isJsonExtension) {
+      onJsonParsed(null);
       onError("Invalid file type. Only .json files are allowed.");
       return;
     }
 
     if (file.size > MAX_JSON_FILE_SIZE_BYTES) {
+      onJsonParsed(null);
       onError(
         `JSON file is too large (${formatBytesToMb(file.size)}). Maximum allowed size is ${formatBytesToMb(MAX_JSON_FILE_SIZE_BYTES)}.`,
       );
@@ -57,6 +60,7 @@ const JsonInputTabs = ({ onJsonParsed, onError }: JsonInputTabsProps) => {
       setJsonFileName(file.name);
       onError(null);
     } catch (error) {
+      onJsonParsed(null);
       const message =
         error instanceof Error
           ? error.message
@@ -86,6 +90,7 @@ const JsonInputTabs = ({ onJsonParsed, onError }: JsonInputTabsProps) => {
     const timeoutId = window.setTimeout(() => {
       const rawBytes = new TextEncoder().encode(rawJson).length;
       if (rawBytes > MAX_RAW_JSON_BYTES) {
+        onJsonParsed(null);
         onError(
           `Pasted JSON is too large (${formatBytesToMb(rawBytes)}). Maximum allowed size is ${formatBytesToMb(MAX_RAW_JSON_BYTES)}.`,
         );
@@ -99,6 +104,7 @@ const JsonInputTabs = ({ onJsonParsed, onError }: JsonInputTabsProps) => {
         onError(null);
         setRawParseSuccess(true);
       } catch (error) {
+        onJsonParsed(null);
         const message =
           error instanceof Error
             ? error.message

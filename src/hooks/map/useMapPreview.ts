@@ -27,6 +27,10 @@ export function useMapPreview({
   const [previewUrl, setPreviewUrl] = useState<string>("");
 
   const openPreview = useCallback(async () => {
+    if (isGeneratingPreview) {
+      return;
+    }
+
     if (!pdfBuffer || !jsonObject) {
       toast.error("Upload both PDF and JSON before preview.");
       return;
@@ -37,9 +41,13 @@ export function useMapPreview({
       return;
     }
 
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
+    setPreviewUrl((currentPreviewUrl) => {
+      if (currentPreviewUrl) {
+        URL.revokeObjectURL(currentPreviewUrl);
+      }
+
+      return "";
+    });
 
     try {
       setIsPreviewOpen(true);
@@ -82,13 +90,19 @@ export function useMapPreview({
         mappingObject,
       );
       const url = URL.createObjectURL(blob);
-      setPreviewUrl(url);
+      setPreviewUrl((currentPreviewUrl) => {
+        if (currentPreviewUrl) {
+          URL.revokeObjectURL(currentPreviewUrl);
+        }
+
+        return url;
+      });
     } catch (error) {
       toast.error(`Failed to generate preview: ${String(error)}`);
     } finally {
       setIsGeneratingPreview(false);
     }
-  }, [jsonObject, mappingObject, pdfBuffer, previewUrl]);
+  }, [isGeneratingPreview, jsonObject, mappingObject, pdfBuffer]);
 
   const closePreview = useCallback(() => {
     setIsPreviewOpen(false);

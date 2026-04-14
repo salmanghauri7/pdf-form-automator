@@ -53,7 +53,7 @@ export function useMapBootstrap({
           return;
         }
 
-        setError(`Got this error${String(err)}`);
+          setError(`Failed to extract PDF form fields: ${String(err)}`);
       } finally {
         if (!isCancelled) {
           setLoading(false);

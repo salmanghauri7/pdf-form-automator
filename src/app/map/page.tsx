@@ -205,6 +205,7 @@ export default function MapJsonToPdf() {
             <button
               type="button"
               onClick={openPreview}
+              disabled={isGeneratingPreview}
               className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500"
             >
               Preview
