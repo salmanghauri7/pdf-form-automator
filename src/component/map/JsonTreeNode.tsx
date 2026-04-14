@@ -221,7 +221,7 @@ function JsonTreeNode({ data }: JsonTreeNodeProps) {
       <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
         JSON Source
       </div>
-      <div className="max-h-[66vh]  pr-2">
+      <div className="max-h-[1000vh]  pr-2">
         <JsonBranch
           node={tree}
           isRoot

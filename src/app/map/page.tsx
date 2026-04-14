@@ -2,14 +2,8 @@
 import JsonTreeNode from "@/component/map/JsonTreeNode";
 import PdfFieldNode from "@/component/map/PdfFieldNode";
 import useFileContext from "@/context/FileContext";
-import {
-  extractPdfFormFields,
-  fillPdfWithMapping,
-  validatePdfMapping,
-} from "@/utils/pdfUtils";
 import "@xyflow/react/dist/style.css";
 import {
-  addEdge,
   applyEdgeChanges,
   Background,
   Connection,
@@ -23,7 +17,16 @@ import {
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import PreviewModal from "@/component/map/PreviewModal";
-import { Toaster, toast } from "sonner";
+import { Toaster } from "sonner";
+import {
+  areMappingsEqual,
+  buildMappingFromEdges,
+  connectEdgeSingleTarget,
+  createEdgesFromMapping,
+  filterEdgesByVisibleSources,
+} from "@/utils/mapFlowUtils";
+import { useMapBootstrap } from "@/hooks/map/useMapBootstrap";
+import { useMapPreview } from "@/hooks/map/useMapPreview";
 
 const nodeTypes = {
   jsonTree: JsonTreeNode,
@@ -32,44 +35,29 @@ const nodeTypes = {
 
 export default function MapJsonToPdf() {
   const router = useRouter();
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>();
-  const [formFields, setFormFields] = useState<string[]>([]);
-  const [isPreviewOpen, setIsPreviewOpen] = useState<boolean>(false);
-  const [isGeneratingPreview, setIsGeneratingPreview] =
-    useState<boolean>(false);
-  const [previewUrl, setPreviewUrl] = useState<string>("");
   const [visibleSourceHandles, setVisibleSourceHandles] =
     useState<Set<string> | null>(null);
   const { pdfBuffer, jsonObject, mappingObject, setMappingObject, isHydrated } =
     useFileContext();
 
-  useEffect(() => {
-    if (!isHydrated) {
-      return;
-    }
+  const { loading, error, formFields } = useMapBootstrap({
+    isHydrated,
+    pdfBuffer,
+    jsonObject,
+    onMissingData: () => router.replace("/upload"),
+  });
 
-    if (!pdfBuffer || !jsonObject) {
-      router.replace("/upload");
-      return;
-    }
-
-    const processData = async () => {
-      try {
-        setLoading(true);
-        setError("");
-
-        const formFields = await extractPdfFormFields(pdfBuffer);
-        setFormFields(formFields);
-      } catch (error) {
-        setError("Got this error" + error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    processData();
-  }, [isHydrated, pdfBuffer, jsonObject, router]);
+  const {
+    isPreviewOpen,
+    isGeneratingPreview,
+    previewUrl,
+    openPreview,
+    closePreview,
+  } = useMapPreview({
+    pdfBuffer,
+    jsonObject,
+    mappingObject,
+  });
 
   const onVisibleSourceHandlesChange = useCallback((handles: string[]) => {
     setVisibleSourceHandles(new Set(handles));
@@ -97,63 +85,14 @@ export default function MapJsonToPdf() {
   }, [formFields, jsonObject, onVisibleSourceHandlesChange]);
 
   const initialEdges = useMemo<Edge[]>(() => {
-    if (typeof mappingObject === "object" && mappingObject != null) {
-      return Object.entries(mappingObject).map(([pdfFieldName, path]) => ({
-        id: `${pdfFieldName}-${path}`,
-        source: "json-source-node",
-        sourceHandle: String(path),
-        target: "pdf-fields-node",
-        targetHandle: pdfFieldName,
-        animated: true,
-      }));
-    }
-    return [];
+    return createEdgesFromMapping(mappingObject);
   }, [mappingObject]);
-
-  const buildMappingFromEdges = useCallback(
-    (edgesList: Edge[]): Record<string, string> => {
-      return edgesList.reduce<Record<string, string>>((accumulator, edge) => {
-        if (edge.targetHandle == null || edge.sourceHandle == null) {
-          return accumulator;
-        }
-
-        accumulator[String(edge.targetHandle)] = String(edge.sourceHandle);
-        return accumulator;
-      }, {});
-    },
-    [],
-  );
-
-  const areMappingsEqual = useCallback(
-    (current: Record<string, string> | null, next: Record<string, string>) => {
-      const safeCurrent = current ?? {};
-      const currentKeys = Object.keys(safeCurrent);
-      const nextKeys = Object.keys(next);
-
-      if (currentKeys.length !== nextKeys.length) {
-        return false;
-      }
-
-      return currentKeys.every((key) => safeCurrent[key] === next[key]);
-    },
-    [],
-  );
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges] = useEdgesState(initialEdges);
 
   const renderedEdges = useMemo(() => {
-    if (visibleSourceHandles == null) {
-      return edges;
-    }
-
-    return edges.filter((edge) => {
-      if (edge.sourceHandle == null) {
-        return true;
-      }
-
-      return visibleSourceHandles.has(String(edge.sourceHandle));
-    });
+    return filterEdgesByVisibleSources(edges, visibleSourceHandles);
   }, [edges, visibleSourceHandles]);
 
   useEffect(() => {
@@ -178,48 +117,12 @@ export default function MapJsonToPdf() {
 
       return derivedMapping;
     });
-  }, [
-    areMappingsEqual,
-    buildMappingFromEdges,
-    edges,
-    isHydrated,
-    loading,
-    setMappingObject,
-  ]);
+  }, [edges, isHydrated, loading, setMappingObject]);
 
   const onConnect = useCallback(
     (params: Connection) => {
-      if (params.sourceHandle == null || params.targetHandle == null) {
-        return;
-      }
-
-      const sourceHandle = params.sourceHandle;
-      const targetField = params.targetHandle;
-
       setEdges((existing) => {
-        // Keep source fan-out possible: only enforce one edge per target field.
-        const withoutTarget = existing.filter(
-          (edge) => edge.targetHandle !== targetField,
-        );
-
-        const connectionExists = withoutTarget.some(
-          (edge) =>
-            edge.sourceHandle === sourceHandle &&
-            edge.targetHandle === targetField,
-        );
-
-        if (connectionExists) {
-          return withoutTarget;
-        }
-
-        return addEdge(
-          {
-            ...params,
-            id: `${targetField}-${sourceHandle}`,
-            animated: true,
-          },
-          withoutTarget,
-        );
+        return connectEdgeSingleTarget(existing, params);
       });
     },
     [setEdges],
@@ -244,78 +147,6 @@ export default function MapJsonToPdf() {
     },
     [setEdges],
   );
-
-  const openPreview = async () => {
-    if (!pdfBuffer || !jsonObject) {
-      toast.error("Upload both PDF and JSON before preview.");
-      return;
-    }
-
-    if (!mappingObject || Object.keys(mappingObject).length === 0) {
-      toast.error("Create at least one mapping before preview.");
-      return;
-    }
-
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
-
-    try {
-      setIsPreviewOpen(true);
-      setIsGeneratingPreview(true);
-
-      const validation = await validatePdfMapping(
-        pdfBuffer,
-        jsonObject,
-        mappingObject,
-      );
-
-      if (validation.warningCount > 0) {
-        toast.warning(
-          `Mapping check found ${validation.warningCount} warning${validation.warningCount > 1 ? "s" : ""}.`,
-        );
-      }
-
-      if (validation.errorCount > 0) {
-        const previewIssues = validation.issues
-          .filter((issue) => issue.level === "error")
-          .slice(0, 3);
-
-        previewIssues.forEach((issue) => {
-          toast.error(`${issue.fieldName}: ${issue.message}`);
-        });
-
-        if (validation.errorCount > previewIssues.length) {
-          toast.error(
-            `+${validation.errorCount - previewIssues.length} more mapping error${validation.errorCount - previewIssues.length > 1 ? "s" : ""}.`,
-          );
-        }
-
-        setIsPreviewOpen(false);
-        return;
-      }
-
-      const blob = await fillPdfWithMapping(
-        pdfBuffer,
-        jsonObject,
-        mappingObject ?? {},
-      );
-      const url = URL.createObjectURL(blob);
-      setPreviewUrl(url);
-    } catch (error) {
-      toast.error(`Failed to generate preview: ${String(error)}`);
-    } finally {
-      setIsGeneratingPreview(false);
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-    };
-  }, [previewUrl]);
 
   if (loading) {
     return (
@@ -407,7 +238,7 @@ export default function MapJsonToPdf() {
 
       <PreviewModal
         isOpen={isPreviewOpen}
-        onClose={() => setIsPreviewOpen(false)}
+        onClose={closePreview}
         previewUrl={previewUrl}
         isGenerating={isGeneratingPreview}
       />

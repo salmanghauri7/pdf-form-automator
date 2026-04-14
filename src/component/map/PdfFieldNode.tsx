@@ -14,7 +14,7 @@ export default function PdfFieldNode({ data }: PdfFieldNodeProps) {
       <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
         PDF Fields
       </div>
-      <div className="max-h-[66vh] space-y-2 overflow-auto pr-2">
+      <div className="max-h-[1000vh] space-y-2 overflow-auto pr-2">
         {fields.map((fieldName) => (
           <div
             key={fieldName}
